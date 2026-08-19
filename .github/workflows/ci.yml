@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Make scripts executable
-        run: chmod +x automation.sh test.sh
+        run: chmod +x automation.sh test.sh analyze_results.sh
 
       - name: Run automated tests
         run: ./test.sh
@@ -49,6 +49,19 @@ jobs:
         with:
           name: pipeline-report
           path: pipeline_report.txt
+
+      - name: Run prompt-based analysis
+        if: always()
+        run: |
+          chmod +x analyze_results.sh
+          ./analyze_results.sh
+
+      - name: Upload prompt analysis report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-analysis-report
+          path: prompt_analysis.txt
 
       - name: Update Agile task on success
         if: success()
