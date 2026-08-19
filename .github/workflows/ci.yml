@@ -1,0 +1,44 @@
+name: CI-CD Experiment 4
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x automation.sh test.sh
+
+      - name: Run automated tests
+        run: ./test.sh
+
+      - name: Run automation
+        run: ./automation.sh
+
+      - name: Display automation log
+        run: cat automation.log
+
+      - name: Generate pipeline report
+        if: always()
+        run: |
+          echo "CI/CD Pipeline Report" > pipeline_report.txt
+          echo "======================" >> pipeline_report.txt
+          echo "Project: CI-CD-Experiment4" >> pipeline_report.txt
+          echo "Automated tests completed." >> pipeline_report.txt
+          echo "Pipeline status: ${{ job.status }}" >> pipeline_report.txt
+
+      - name: Upload pipeline report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-report
+          path: pipeline_report.txt
