@@ -10,6 +10,10 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -45,3 +49,48 @@ jobs:
         with:
           name: pipeline-report
           path: pipeline_report.txt
+
+      - name: Update Agile task on success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 1
+            });
+
+            if (issue.data.state === 'open') {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: 1,
+                body: '✅ CI/CD pipeline completed successfully. Automated tests passed and the Agile task is completed.'
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: 1,
+                state: 'closed'
+              });
+
+              console.log('Agile Issue #1 closed successfully.');
+            } else {
+              console.log('Agile Issue #1 is already closed.');
+            }
+
+      - name: Update Agile task on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 1,
+              body: '❌ CI/CD pipeline failed. Please inspect the failed workflow steps and correct the issue.'
+            });
+
+            console.log('Agile Issue #1 remains open because the pipeline failed.');
